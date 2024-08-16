@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 public class MemberWriteService {
     final private MemberRepository memberRepository;
 
-    public Member create(RegisterMemberCommand command) {
+    public Member register(RegisterMemberCommand command) {
         /*
          * 목표
          * - 회원정보(이메일, 닉네임, 생년월일)를 등록한다.
