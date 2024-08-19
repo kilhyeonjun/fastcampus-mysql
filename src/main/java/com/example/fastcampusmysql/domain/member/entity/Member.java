@@ -1,43 +1,45 @@
 package com.example.fastcampusmysql.domain.member.entity;
 
-import lombok.Builder;
-import lombok.Getter;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
-
+import lombok.Builder;
+import lombok.Getter;
 import org.springframework.util.Assert;
 
 @Getter
 public class Member {
 
-    final private Long id;
+  final private static Long NAME_MAX_LENGTH = 10L;
+  final private Long id;
+  final private String email;
 
-    private String nickname;
+  final private LocalDate birthday;
 
-    final private String email;
+  final private LocalDateTime createdAt;
+  private String nickname;
 
-    final private LocalDate birthday;
+  @Builder
+  public Member(Long id, String nickname, String email, LocalDate birthday,
+      LocalDateTime createdAt) {
+    this.id = id;
+    this.email = Objects.requireNonNull(email);
+    this.birthday = Objects.requireNonNull(birthday);
 
-    final private LocalDateTime createdAt;
+    validateNickname(nickname);
+    this.nickname = Objects.requireNonNull(nickname);
 
-    final private static Long NAME_MAX_LENGTH = 10L;
+    this.createdAt = createdAt == null ? LocalDateTime.now() : createdAt;
+  }
 
-    @Builder
-    public Member(Long id, String nickname, String email, LocalDate birthday, LocalDateTime createdAt) {
-        this.id = id;
-        this.email = Objects.requireNonNull(email);
-        this.birthday = Objects.requireNonNull(birthday);
+  public void changeNickname(String to) {
+    Objects.requireNonNull(to);
+    validateNickname(to);
+    this.nickname = to;
+  }
 
-        validateNickname(nickname);
-        this.nickname = Objects.requireNonNull(nickname);
+  private void validateNickname(String nickname) {
+    Assert.isTrue(nickname.length() <= NAME_MAX_LENGTH, "최대 길이를 초과했습니다.");
 
-        this.createdAt = createdAt == null ? LocalDateTime.now() : createdAt;
-    }
-
-    void validateNickname(String nickname) {
-        Assert.isTrue(nickname.length() <= NAME_MAX_LENGTH, "최대 길이를 초과했습니다.");
-
-    }
+  }
 }
