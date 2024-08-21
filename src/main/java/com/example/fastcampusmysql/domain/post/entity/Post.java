@@ -18,18 +18,19 @@ public class Post {
   private final LocalDate createdDate;
 
   private final LocalDateTime createdAt;
-
+  private final Long version;
   private Long likeCount;
 
   @Builder
   public Post(Long id, Long memberId, String contents, LocalDate createdDate,
-      LocalDateTime createdAt, Long likeCount) {
+      LocalDateTime createdAt, Long likeCount, Long version) {
     this.id = id;
     this.memberId = Objects.requireNonNull(memberId);
     this.contents = Objects.requireNonNull(contents);
     this.createdDate = createdDate == null ? LocalDate.now() : createdDate;
     this.createdAt = createdAt == null ? LocalDateTime.now() : createdAt;
     this.likeCount = likeCount == null ? 0 : likeCount;
+    this.version = version == null ? 0 : version;
   }
 
   public void increaseLikeCount() {
