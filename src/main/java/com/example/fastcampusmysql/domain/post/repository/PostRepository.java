@@ -7,6 +7,7 @@ import com.example.fastcampusmysql.utill.PageHelper;
 import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -24,18 +25,22 @@ import org.springframework.stereotype.Repository;
 public class PostRepository {
 
   static final String TABLE = "POST";
+
   private static final RowMapper<Post> ROW_MAPPER = (ResultSet resultSet, int rowNum) -> new Post(
       resultSet.getLong("id"),
       resultSet.getLong("memberId"),
       resultSet.getString("contents"),
       resultSet.getObject("createdDate", LocalDate.class),
-      resultSet.getTimestamp("createdAt").toLocalDateTime()
+      resultSet.getTimestamp("createdAt").toLocalDateTime(),
+      resultSet.getLong("likeCount")
   );
+
   private static final RowMapper<DailyPostCount> DAILY_POST_COUNT_ROW_MAPPER = (ResultSet resultSet, int rowNum) -> new DailyPostCount(
       resultSet.getLong("memberId"),
       resultSet.getObject("createdDate", LocalDate.class),
       resultSet.getLong("count")
   );
+
   private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
   public List<DailyPostCount> groupByCreatedDate(DailyPostCountRequest request) {
@@ -67,6 +72,23 @@ public class PostRepository {
     var posts = namedParameterJdbcTemplate.query(sql, params, ROW_MAPPER);
 
     return new PageImpl(posts, pageable, getCount(memberId));
+  }
+
+  public Optional<Post> findById(Long postId, Boolean requiredLock) {
+    var sql = String.format("""
+        SELECT *
+        FROM %s
+        WHERE id = :postId
+        """, TABLE);
+    if (requiredLock) {
+      sql += " FOR UPDATE";
+    }
+
+    var params = new MapSqlParameterSource().addValue("postId", postId);
+
+    var nullablePost = namedParameterJdbcTemplate.queryForObject(sql, params, ROW_MAPPER);
+
+    return Optional.ofNullable(nullablePost);
   }
 
   private Long getCount(Long memberId) {
@@ -177,7 +199,7 @@ public class PostRepository {
       return insert(post);
     }
 
-    throw new UnsupportedOperationException("Post는 갱신을 지원하지 않습니다");
+    return update(post);
   }
 
   public void bulkInsert(List<Post> posts) {
@@ -211,5 +233,20 @@ public class PostRepository {
         .build();
   }
 
+  private Post update(Post post) {
+    var sql = String.format("""
+        UPDATE %s SET
+          memberId = :memberId,
+          contents = :contents,
+          createdDate = :createdDate,
+          likeCount = :likeCount,
+          createdAt = :createdAt
+        WHERE id = :id
+        """, TABLE);
 
+    var params = new BeanPropertySqlParameterSource(post);
+    namedParameterJdbcTemplate.update(sql, params);
+
+    return post;
+  }
 }
